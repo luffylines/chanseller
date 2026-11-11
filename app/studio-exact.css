@@ -1,0 +1,172 @@
+/* ChanSeller Product Studio visual-match pass, scoped to /studio only.
+   Light-blue adaptation of the user's multi-panel UI reference. */
+body:has(.studio-matched){background:#fcfcff}
+body:has(.studio-matched) .app-layout{background:#fcfcff;min-height:100vh}
+body:has(.studio-matched) .app-sidebar{width:210px;flex-basis:210px;padding:17px 11px 18px;border-color:#e8eaf3}
+body:has(.studio-matched) .app-logo{padding:7px 10px 28px}
+body:has(.studio-matched) .app-logo .brand{font-size:19px;letter-spacing:-.8px}
+body:has(.studio-matched) .app-logo .brand-icon{width:30px;height:33px;border-radius:8px}
+body:has(.studio-matched) .app-topbar{display:none}
+body:has(.studio-matched) .app-content{padding:24px 18px 38px;max-width:1610px}
+body:has(.studio-matched) .app-page-header{margin:0 0 23px;align-items:center;min-height:49px;gap:20px}
+body:has(.studio-matched) .app-overline{display:none}
+body:has(.studio-matched) .app-title-group h1{font-size:23px;letter-spacing:-.75px;display:flex;align-items:center;gap:12px;margin:0 0 3px;font-weight:860;color:#1a2542}
+body:has(.studio-matched) .app-title-group h1:before{content:"✦";font-size:27px;line-height:1;color:#4091ee;text-shadow:6px -5px 0 #b6dcff}
+body:has(.studio-matched) .app-title-group>p{font-size:11.5px;color:#8190a8;line-height:1.5;margin:0 0 0 40px}
+body:has(.studio-matched) .app-page-actions .ui-btn{height:36px;min-height:36px;padding:8px 15px;min-width:74px;font-size:11px;font-weight:800}
+body:has(.studio-matched) .app-page-actions .ui-btn-primary{background:linear-gradient(115deg,#328cec,#5ba7ef);box-shadow:0 4px 11px #468ee235}
+body:has(.studio-matched) .app-footer{display:none}
+body:has(.studio-matched) .app-nav-item{height:43px;font-size:11.5px;padding:0 12px;border-radius:9px;gap:11px}
+body:has(.studio-matched) .app-nav-item svg{width:18px;height:18px;stroke-width:2.1}
+body:has(.studio-matched) .app-nav-item.active{background:linear-gradient(110deg,#3a8dea,#6aaef5);color:white}
+body:has(.studio-matched) .sidebar-nav-title{font-size:9px;letter-spacing:1.3px;padding:0 12px 12px}
+body:has(.studio-matched) .sidebar-divider{margin:15px 6px 11px}
+body:has(.studio-matched) .sidebar-upgrade{border-radius:9px;background:linear-gradient(145deg,#4597eb,#3680df)}
+body:has(.studio-matched) .sidebar-upgrade h3{font-size:12px}
+body:has(.studio-matched) .sidebar-upgrade p{font-size:10px}
+body:has(.studio-matched) .sidebar-local{font-size:9px}
+.studio-matched{width:100%}
+.studio-matched .studio-main-grid{display:grid;grid-template-columns:minmax(210px,.77fr) minmax(315px,1.35fr) minmax(220px,.80fr);gap:11px;align-items:stretch}
+.studio-matched .workspace-card{border:1px solid #e8eaf4;border-radius:12px;box-shadow:0 4px 16px #283e7f0d,0 1px 2px #2a40670b;background:#fff}
+.studio-matched .editor-tool-panel{display:flex;flex-direction:column;min-height:530px;padding:16px 13px;overflow:visible}
+.studio-matched .editor-canvas-card{display:flex;flex-direction:column;min-height:530px;padding:12px}
+.studio-matched .editor-export-panel{display:flex;flex-direction:column;min-height:530px;padding:16px 13px}
+.studio-matched .edit-panel-title{margin:6px 3px 13px;min-height:23px}
+.studio-matched .edit-panel-title>strong{font-size:13px;letter-spacing:-.3px;font-weight:850}
+.studio-matched .edit-panel-title>span{display:none}
+.studio-matched .edit-tools-list{display:grid;gap:4px;flex-shrink:0;border:1px solid #f0f0fa;border-radius:11px;padding:6px 4px;background:#fff;box-shadow:0 4px 10px #34345808}
+.studio-matched .tool-menu-row{display:flex;align-items:center;border-radius:8px;min-height:48px;transition:background .16s;background:#fff;gap:2px}
+.studio-matched .tool-menu-row:hover{background:#f4f9ff}
+.studio-matched .tool-menu-row.selected{background:#eaf4ff}
+.studio-matched .tool-menu-row:first-child.selected{background:#e9f3ff}
+.studio-matched .edit-tools-list button{border:0;background:transparent;color:#273b59;box-shadow:none;min-height:0;height:auto;letter-spacing:-.15px}
+.studio-matched .tool-menu-row.selected .tool-menu-button{color:#2d7cd6}
+.studio-matched .tool-menu-button{display:flex;align-items:center;gap:11px;flex:1;width:auto;min-width:0;text-align:left;padding:11px 7px 11px 10px;font-size:11px;font-weight:800;line-height:1.25}
+.studio-matched .tool-menu-button svg{flex-shrink:0;stroke-width:2.2;color:#405575}
+.studio-matched .tool-menu-row.selected .tool-menu-button svg{color:#348aee}
+.studio-matched .tool-menu-chevron{width:24px;display:grid;place-items:center;color:#516887!important;flex-shrink:0;padding:6px 3px}
+.studio-matched .tool-menu-row.selected .tool-menu-chevron{color:#408fee!important}
+.studio-matched .tool-toggle{position:relative;flex:0 0 auto;width:33px!important;height:19px!important;display:flex;align-items:center;padding:2px!important;border-radius:999px;background:#cad6e3!important;margin:0 5px 0 0}
+.studio-matched .tool-toggle.is-on{background:#368fe9!important}
+.studio-matched .tool-toggle>span{background:#fff;width:15px;height:15px;border-radius:50%;box-shadow:0 1px 3px #0c23451e;transition:transform .2s}
+.studio-matched .tool-toggle.is-on>span{transform:translateX(14px)}
+.studio-matched .editor-tool-content{border-top:0;margin-top:0;padding:0}
+.studio-matched .editor-tool-content.tool-content-remove{display:none}
+.studio-matched .editor-tool-content:not(.tool-content-remove){background:#f7fbff;border:1px solid #e4edf9;border-radius:10px;margin-top:12px;padding:12px}
+.studio-matched .tool-details h3{font-size:11px;color:#2e527e}
+.studio-matched .tool-details>p{font-size:10px;color:#8496ac;line-height:1.55}
+.studio-matched .tool-details>.ui-btn{border-radius:8px;min-width:0;white-space:normal;font-size:10px}
+.studio-matched .tool-details .side-swatch{border:1px solid #d7e5f4}
+.studio-matched .studio-sample-controls{display:grid;gap:0;margin-top:auto;padding-top:13px}
+.studio-matched .studio-sample-controls>button{display:flex;align-items:center;gap:7px;text-align:left;width:100%;background:#fff;border:0;border-top:1px solid #eef1f7;color:#6786aa;padding:10px 5px;font-size:10px;font-weight:800}
+.studio-matched .studio-sample-controls>button:hover{color:#2d87e4}
+.studio-matched .studio-sample-controls>button svg:last-child{margin-left:auto}
+.studio-matched .local-worker-box{display:flex;gap:8px;align-items:center;margin-top:6px;padding:10px 8px;border:1px solid #e8edf5;background:#f8fbff;border-radius:8px}
+.studio-matched .local-worker-box strong{font-size:10px}
+.studio-matched .local-worker-box small{font-size:9px}
+.studio-matched .canvas-toolbar{height:41px;flex:0 0 41px;justify-content:center;position:relative;padding:0 0 9px;margin:0}
+.studio-matched .canvas-tabset{background:#f5f7fc;border-radius:99px;display:flex;align-items:center;border:1px solid #edf0f6;gap:0;padding:2px}
+.studio-matched .canvas-tabset button{font-size:10px;font-weight:850;padding:8px 17px;border-radius:99px;background:transparent;color:#71809b}
+.studio-matched .canvas-tabset button.canvas-tab-active{background:linear-gradient(115deg,#348ce7,#5faef4);color:#fff;box-shadow:0 4px 9px #438eeb27}
+.studio-matched .canvas-tabset button:disabled{opacity:.55}
+.studio-matched .canvas-icon-actions{position:absolute;right:4px;top:4px;display:flex;gap:2px}
+.studio-matched .canvas-icon-actions button{border:0;display:grid;place-items:center;color:#8ba0b9;width:28px;height:28px;background:none;border-radius:7px}
+.studio-matched .canvas-icon-actions button:hover{background:#eff6ff;color:#2a8be6}
+.studio-matched .editor-canvas{position:relative;min-height:345px;height:auto;aspect-ratio:1.36;flex:1;overflow:hidden;border:1px solid #e7eaf1;border-radius:10px;background:#fff}
+.studio-matched .checker-canvas,.studio-matched .checker-swatch{background-color:#fff!important;background-image:linear-gradient(45deg,#e9ecf2 25%,transparent 25%),linear-gradient(-45deg,#e9ecf2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e9ecf2 75%),linear-gradient(-45deg,transparent 75%,#e9ecf2 75%)!important;background-size:28px 28px!important;background-position:0 0,0 14px,14px -14px,-14px 0!important}
+.studio-matched .canvas-render{inset:0;position:absolute}
+.studio-matched .canvas-render .canvas-main-image{max-width:92%;max-height:96%;width:90%;height:90%;object-fit:contain;position:relative;filter:drop-shadow(0 13px 9px #30436329)}
+.studio-matched .studio-empty-demo{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.studio-matched .studio-empty-demo>img{position:absolute;width:90%;height:92%;object-fit:contain;filter:drop-shadow(0 14px 11px #31425e2a);top:2%;left:5%;pointer-events:none}
+.studio-matched .studio-sample-marker{position:absolute;top:13px;left:13px;z-index:6;background:#ffffffdf;border:1px solid #dbe8f5;color:#6b91b3;padding:6px 8px;border-radius:6px;font-weight:850;font-size:8px;letter-spacing:1px;pointer-events:none}
+.studio-matched .studio-demo-actions{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:6;align-items:center}
+.studio-matched .studio-demo-actions button{border-radius:7px;border:1px solid #deeaf7;background:#fffffff5;color:#3c84d5;white-space:nowrap;padding:7px 9px;font-size:9px;font-weight:850;box-shadow:0 3px 12px #3b568e19;display:flex;align-items:center;gap:5px}
+.studio-matched .studio-demo-actions button:hover{background:#e9f5ff}
+.studio-matched .studio-process-overlay{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:#388ee8;color:white;border:0;border-radius:8px;padding:10px 14px;white-space:nowrap;display:flex;align-items:center;gap:8px;font-weight:850;font-size:11px;box-shadow:0 6px 15px #337fd239}
+.studio-matched .canvas-original-label{display:none}
+.studio-matched .canvas-bottom-toolbar{padding:10px 3px 3px;margin:0;display:flex;align-items:center;justify-content:center;flex:0 0 40px}
+.studio-matched .studio-preview-controls{display:flex;align-items:center;justify-content:center;gap:8px}
+.studio-matched .studio-preview-controls button{border:0;background:transparent;border-radius:7px;min-width:27px;height:28px;display:grid;place-items:center;color:#33496e;padding:4px}
+.studio-matched .studio-preview-controls button:hover:not(:disabled){background:#eef6ff;color:#328ae9}
+.studio-matched .studio-preview-controls button:disabled{opacity:.34}
+.studio-matched .studio-preview-controls .canvas-toolbar-divider{height:19px;width:1px;background:#e5ebf6;margin:0 4px}
+.studio-matched .zoom-indicator{font-size:11px;color:#263f5b;font-weight:850;min-width:38px;text-align:center}
+.studio-matched .studio-project-details{border-top:1px solid #edf1f7;margin-top:6px;padding-top:6px}
+.studio-matched .studio-project-details summary{font-size:9px;font-weight:800;letter-spacing:.2px;color:#95a8bb;cursor:pointer;display:flex;gap:8px;align-items:center}
+.studio-matched .studio-project-details summary svg{height:12px}
+.studio-matched .studio-project-details .studio-name-field{padding-top:10px;border-top:0}
+.studio-matched .studio-project-details input{min-width:0}
+.studio-matched .editor-export-panel .edit-panel-title{margin:7px 0 12px;padding-left:2px}
+.studio-matched .background-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 9px;padding:6px 3px 12px;border:1px solid #f0f1f7;border-radius:11px}
+.studio-matched .background-choice{min-width:0;gap:7px;display:flex;flex-direction:column;align-items:center;border:0;background:transparent;padding:0;color:#2c4665}
+.studio-matched .background-choice>span{width:100%;max-width:none;height:auto;min-height:0;aspect-ratio:1.12;border-radius:8px;border:2px solid #f0f1f6;box-shadow:none;background-color:white;display:grid;place-items:center;overflow:hidden}
+.studio-matched .background-choice>.checker-swatch{background-size:18px 18px!important;background-position:0 0,0 9px,9px -9px,-9px 0!important}
+.studio-matched .background-choice>span.preset-white{background:#fff!important}
+.studio-matched .background-choice>span.preset-color{background:linear-gradient(135deg,#cdeeff,#e6ddff 48%,#ffb6ca 100%)!important}
+.studio-matched .background-choice.background-selected>span{border-color:#3e93ef;box-shadow:0 0 0 1px #beddfd}
+.studio-matched .background-choice.background-selected small{color:#2e87e4}
+.studio-matched .background-choice>small{font-size:9.5px;font-weight:800;white-space:nowrap;color:#3b4d68}
+.studio-matched .editor-export-panel .export-panel-separator{border-top:1px solid #e9edf4;height:0;background:none;margin:17px 0 12px}
+.studio-matched .studio-export-advanced{margin:0 2px 12px}
+.studio-matched .studio-export-advanced summary{display:flex;align-items:center;gap:7px;font-size:10px;color:#8a9fb4;font-weight:800;cursor:pointer;padding:4px 1px;list-style:none}
+.studio-matched .studio-export-advanced summary>svg:last-child{margin-left:auto}
+.studio-matched .studio-export-advanced[open] summary>svg:last-child{transform:rotate(180deg)}
+.studio-matched .studio-export-advanced .export-panel-options{margin:11px 0 0;gap:7px;max-width:100%}
+.studio-matched .editor-export-panel>.ui-btn{width:100%;margin:0 0 9px;padding:11px 7px;font-size:11px;min-height:38px;border-radius:8px}
+.studio-matched .editor-export-panel>.ui-btn.ui-btn-primary{background:linear-gradient(110deg,#3286e9,#58aaf5);font-weight:850}
+.studio-matched .editor-export-panel>.ui-btn.ui-btn-outline{background:#f2f7ff;color:#335d89;border-color:#e5edf9}
+.studio-matched .export-assurance{border:0;background:transparent;margin-top:auto;padding:12px 2px 0}
+.studio-matched .export-assurance svg{color:#6aa6db}
+.studio-matched .export-assurance p{color:#a0aebe;font-size:9px;line-height:1.55}
+.studio-matched .studio-messages{margin-top:14px}
+.studio-matched .editor-canvas:fullscreen{height:100vh;aspect-ratio:auto;border-radius:0}
+.studio-matched .editor-canvas:fullscreen .canvas-main-image{height:92%;width:92%;max-height:95%}
+@media(min-width:1200px){
+  body:has(.studio-matched) .app-sidebar{width:211px;flex-basis:211px}
+  .studio-matched .studio-main-grid{grid-template-columns:minmax(215px,.77fr) minmax(360px,1.38fr) minmax(225px,.77fr)}
+}
+@media(min-width:1001px) and (max-width:1199px){
+  body:has(.studio-matched) .app-sidebar{width:191px;flex-basis:191px}
+  body:has(.studio-matched) .app-content{padding:20px 11px 30px}
+  .studio-matched .studio-main-grid{grid-template-columns:minmax(180px,.71fr) minmax(300px,1.4fr) minmax(185px,.74fr);gap:7px}
+  .studio-matched .editor-tool-panel,.studio-matched .editor-export-panel{padding:13px 9px}
+  .studio-matched .tool-menu-button{font-size:10px;gap:7px;padding:10px 5px}
+  .studio-matched .background-grid{gap:9px 4px;padding:4px}
+  .studio-matched .background-choice small{font-size:8px}
+}
+@media(max-width:1000px){
+  body:has(.studio-matched) .app-topbar{display:flex}
+  body:has(.studio-matched) .app-sidebar{position:fixed;width:240px;flex-basis:auto}
+  body:has(.studio-matched) .app-content{padding:20px 14px 30px}
+  .studio-matched .studio-main-grid{grid-template-columns:minmax(195px,.76fr) minmax(310px,1.30fr)}
+  .studio-matched .editor-export-panel{grid-column:1/-1;min-height:auto}
+  .studio-matched .background-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .studio-matched .editor-tool-panel,.studio-matched .editor-canvas-card{min-height:510px}
+  .studio-matched .editor-canvas{min-height:360px}
+}
+@media(max-width:690px){
+  body:has(.studio-matched) .app-page-header{align-items:flex-start;flex-direction:column;gap:15px}
+  body:has(.studio-matched) .app-title-group h1{font-size:22px}
+  body:has(.studio-matched) .app-title-group>p{margin-left:39px}
+  body:has(.studio-matched) .app-page-actions{width:100%}
+  body:has(.studio-matched) .app-page-actions .studio-header-actions{width:100%;display:flex}
+  body:has(.studio-matched) .app-page-actions .ui-btn{flex:1;font-size:10px}
+  .studio-matched .studio-main-grid{grid-template-columns:1fr}
+  .studio-matched .editor-canvas-card{grid-row:1;min-height:0}
+  .studio-matched .editor-tool-panel{grid-row:2;min-height:0}
+  .studio-matched .editor-export-panel{grid-row:3;grid-column:auto}
+  .studio-matched .edit-tools-list{grid-template-columns:1fr}
+  .studio-matched .studio-sample-controls{margin-top:10px}
+  .studio-matched .editor-canvas{aspect-ratio:1.16;min-height:330px}
+  .studio-matched .background-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .studio-matched .background-choice>span{aspect-ratio:1.25}
+  .studio-matched .studio-export-advanced{margin-top:3px}
+  .studio-matched .studio-demo-actions button{font-size:9px}
+}
+@media(max-width:390px){
+  body:has(.studio-matched) .app-content{padding:18px 10px 26px}
+  .studio-matched .editor-canvas{min-height:275px}
+  .studio-matched .canvas-tabset button{padding:7px 12px;font-size:9px}
+  .studio-matched .studio-demo-actions{gap:4px}
+  .studio-matched .studio-demo-actions button{padding:7px;font-size:8px}
+}
