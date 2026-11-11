@@ -1,235 +1,192 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowDownToLine, ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, CircleHelp, ClipboardCopy, Download, Eraser, FileText, Home, Image as ImageIcon, ImagePlus, Layers3, LoaderCircle, MonitorCheck, Paintbrush, PenLine, RotateCcw, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, UploadCloud, WandSparkles, X } from "lucide-react";
-import { Brand } from "@/components/brand";
+import { useEffect, useRef, useState } from "react";
+import { AppShell } from "@/components/app-shell";
 import { createStudioExport, downloadBlob, presets, safeFilename, type Adjustments, type PresetId } from "@/lib/image";
-import { type CopyResult, type Language, type Platform, type ProductInput, type Tone } from "@/lib/copy";
+import { generateId, saveProduct } from "@/lib/local-data";
+import { ArrowLeftRight, Check, CheckCircle2, ChevronDown, CircleHelp, CloudOff, Copy, Download, Eraser, ImagePlus, Images, Layers3, LoaderCircle, Maximize2, MonitorCheck, Paintbrush, RotateCcw, Save, Scissors, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Upload, UploadCloud, WandSparkles, X } from "lucide-react";
 
-type Section = "photo" | "copy";
-const accepted = new Set(["image/jpeg", "image/png", "image/webp"]);
-const initialProduct: ProductInput = {
-  name: "", category: "", features: "", price: "",
-  platform: "Shopee", tone: "Friendly", language: "Taglish",
-};
+const MAX_BYTES = 8*1024*1024;
+const supported = ["image/png","image/jpeg","image/webp"];
+type StudioPreset = PresetId | "transparent";
+type ExportSize = "square" | "portrait" | "story";
+const sizes: {id:ExportSize;label:string;dimensions:string}[] = [
+  {id:"square",label:"Square · Marketplace",dimensions:"1200 × 1200"},
+  {id:"portrait",label:"Portrait · Social",dimensions:"1080 × 1350"},
+  {id:"story",label:"Story · Vertical",dimensions:"1080 × 1920"}
+];
+function isPreset(value: string|null):value is PresetId {
+  return presets.some(p=>p.id===value);
+}
+export function StudioApp(){
+  const [source,setSource]=useState<string|null>(null);
+  const [processed,setProcessed]=useState<string|null>(null);
+  const [file,setFile]=useState<File|null>(null);
+  const sourceRef=useRef<string|null>(null);
+  const processedRef=useRef<string|null>(null);
+  const fileInput=useRef<HTMLInputElement|null>(null);
+  const [preset,setPreset]=useState<StudioPreset>("white");
+  const [adjust,setAdjust]=useState<Adjustments>({brightness:100,contrast:100,saturation:100});
+  const [exportSize,setExportSize]=useState<ExportSize>("square");
+  const [shadow,setShadow]=useState(true);
+  const [watermark,setWatermark]=useState(false);
+  const [zoom,setZoom]=useState(100);
+  const [compare,setCompare]=useState(false);
+  const [split,setSplit]=useState(50);
+  const [processing,setProcessing]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [exporting,setExporting]=useState(false);
+  const [filename,setFilename]=useState("New Product");
+  const [worker,setWorker]=useState<"checking"|"online"|"offline">("checking");
+  const [showWorkerHelp,setShowWorkerHelp]=useState(false);
+  const [error,setError]=useState("");
+  const [success,setSuccess]=useState("");
+  const [drag,setDrag]=useState(false);
+  const [activeTool,setActiveTool]=useState<"remove"|"background"|"adjust"|"shadow"|"resize"|"watermark">("remove");
+  const base=(process.env.NEXT_PUBLIC_BG_API_URL||"http://127.0.0.1:8000").replace(/\/$/,"");
 
-export function StudioApp() {
-  const [section,setSection] = useState<Section>("photo");
-  const [file,setFile] = useState<File|null>(null);
-  const [original,setOriginal] = useState<string|null>(null);
-  const [cutout,setCutout] = useState<string|null>(null);
-  const originalRef = useRef<string|null>(null);
-  const cutoutRef = useRef<string|null>(null);
-  const inputRef = useRef<HTMLInputElement|null>(null);
-  const [processing,setProcessing] = useState(false);
-  const [exporting,setExporting] = useState(false);
-  const [photoError,setPhotoError] = useState("");
-  const [dragging,setDragging] = useState(false);
-  const [preset,setPreset] = useState<PresetId>("lavender");
-  const [comparison,setComparison] = useState(55);
-  const [adjustments,setAdjustments] = useState<Adjustments>({brightness:100,contrast:100,saturation:100});
-  const [product,setProduct] = useState<ProductInput>(initialProduct);
-  const [copyResult,setCopyResult] = useState<CopyResult|null>(null);
-  const [copyError,setCopyError] = useState("");
-  const [generating,setGenerating] = useState(false);
-  const [copied,setCopied] = useState("");
-  const [showHelp,setShowHelp] = useState(false);
-
-  useEffect(() => () => {
-    if (originalRef.current) URL.revokeObjectURL(originalRef.current);
-    if (cutoutRef.current) URL.revokeObjectURL(cutoutRef.current);
-  }, []);
-
-  function replaceCutout(next: string|null) {
-    if (cutoutRef.current) URL.revokeObjectURL(cutoutRef.current);
-    cutoutRef.current = next;
-    setCutout(next);
+  useEffect(()=>{
+    const requested=new URLSearchParams(window.location.search).get("preset");
+    if(isPreset(requested))setPreset(requested);
+    let live=true;
+    fetch(`${base}/health`,{signal:AbortSignal.timeout(3800)}).then(r=>{
+      if(live)setWorker(r.ok?"online":"offline");
+    }).catch(()=>{if(live)setWorker("offline");});
+    return()=>{live=false;};
+  },[base]);
+  useEffect(()=>()=>{if(sourceRef.current)URL.revokeObjectURL(sourceRef.current);if(processedRef.current)URL.revokeObjectURL(processedRef.current);},[]);
+  function setCutout(url:string|null){
+    if(processedRef.current)URL.revokeObjectURL(processedRef.current);
+    processedRef.current=url;setProcessed(url);
   }
-  function receiveFile(next?: File) {
-    if (!next) return;
-    setPhotoError("");
-    if (!accepted.has(next.type)) { setPhotoError("Upload a JPG, PNG, or WebP image."); return; }
-    if (next.size > 8 * 1024 * 1024) { setPhotoError("Please use an image smaller than 8 MB."); return; }
-    if (originalRef.current) URL.revokeObjectURL(originalRef.current);
-    const url = URL.createObjectURL(next);
-    originalRef.current = url;
-    setFile(next);
-    setOriginal(url);
-    replaceCutout(null);
-    setComparison(55);
-    setAdjustments({brightness:100,contrast:100,saturation:100});
-    if (!product.name.trim()) {
-      const suggested = next.name.replace(/\.[^/.]+$/,"").replace(/[-_]+/g," ").trim();
-      setProduct(prev => ({...prev,name:suggested}));
-    }
+  function takeFile(next?:File){
+    if(!next)return;
+    setError("");setSuccess("");
+    if(!supported.includes(next.type)){setError("Please select a JPG, PNG or WebP image.");return;}
+    if(next.size>MAX_BYTES){setError("The maximum image size is 8MB.");return;}
+    if(sourceRef.current)URL.revokeObjectURL(sourceRef.current);
+    const url=URL.createObjectURL(next);sourceRef.current=url;
+    setSource(url);setCutout(null);setFile(next);setCompare(false);
+    setFilename(next.name.replace(/\.[a-z0-9]+$/i,"").replace(/[-_]/g," ").trim()||"New Product");
+    setAdjust({brightness:100,contrast:100,saturation:100});setZoom(100);
+    setActiveTool("remove");
   }
-  function clearPhoto() {
-    if (originalRef.current) URL.revokeObjectURL(originalRef.current);
-    originalRef.current = null;
-    setOriginal(null);
-    setFile(null);
-    replaceCutout(null);
-    setPhotoError("");
+  function clearFile(){
+    if(sourceRef.current)URL.revokeObjectURL(sourceRef.current);
+    sourceRef.current=null;setSource(null);setCutout(null);setFile(null);
+    setError("");setSuccess("");
   }
-  async function removeBackground() {
-    if (!file || processing) return;
-    setProcessing(true);
-    setPhotoError("");
-    try {
-      const form = new FormData();
-      form.append("file",file);
-      const base = process.env.NEXT_PUBLIC_BG_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(`${base.replace(/\/$/,"")}/remove-background`, {method:"POST",body:form});
-      if (!response.ok) {
-        const data: {detail?: string} = await response.json().catch(() => ({}));
-        throw new Error(data.detail || `Processing failed (HTTP ${response.status}).`);
+  async function removeBackground(){
+    if(!file||processing)return;
+    setError("");setSuccess("");setProcessing(true);
+    try{
+      const form=new FormData();form.append("file",file);
+      const response=await fetch(`${base}/remove-background`,{method:"POST",body:form});
+      if(!response.ok){
+        const json:{detail?:string}=await response.json().catch(()=>({}));
+        throw new Error(json.detail||`Local worker returned HTTP ${response.status}.`);
       }
-      const blob = await response.blob();
-      if (!blob.type.includes("png")) throw new Error("Unexpected output from the image worker.");
-      replaceCutout(URL.createObjectURL(blob));
-      setComparison(55);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown processing error";
-      setPhotoError(message.includes("fetch") || message.includes("Failed to") ?
-        "Cannot reach the local image worker. Start Python on port 8000 (see README), then retry." : message);
-    } finally { setProcessing(false); }
+      const blob=await response.blob();
+      if(!blob.type.includes("png"))throw new Error("The image worker did not return a PNG.");
+      setCutout(URL.createObjectURL(blob));
+      setCompare(false);setWorker("online");setSuccess("Background successfully removed. Customize and save your result.");
+      setActiveTool("background");
+    }catch(e){
+      const message=e instanceof Error?e.message:"Processing failed.";
+      if(message==="Failed to fetch"||message.toLowerCase().includes("network")){
+        setWorker("offline");setShowWorkerHelp(true);setError("The local AI worker is offline. Start the Python worker on port 8000, then retry.");
+      }else setError(message);
+    }finally{setProcessing(false);}
   }
-  async function exportStudio() {
-    if (!cutout || exporting) return;
-    setExporting(true);
-    setPhotoError("");
-    try {
-      const blob = await createStudioExport(cutout,preset,adjustments);
-      downloadBlob(blob,`${safeFilename(product.name || file?.name || "product")}-chanseller-studio.png`);
-    } catch (e) { setPhotoError(e instanceof Error ? e.message : "Unable to export."); }
-    finally { setExporting(false); }
+  const actualPreset:PresetId=preset==="transparent"?"white":preset;
+  async function currentExport(){
+    if(!processed)throw new Error("Remove the background before exporting.");
+    if(preset==="transparent"){
+      const response=await fetch(processed);return response.blob();
+    }
+    let brand="";
+    if(watermark){try{const stored=JSON.parse(localStorage.getItem("chanseller-brand-kit")||"{}");brand=String(stored.name||"ChanSeller").slice(0,45);}catch{brand="ChanSeller";}}
+    return createStudioExport(processed,actualPreset,adjust,{size:exportSize,shadow,watermark:brand});
   }
-  async function exportTransparent() {
-    if (!cutout) return;
-    try {
-      const response = await fetch(cutout);
-      downloadBlob(await response.blob(),`${safeFilename(product.name || "product")}-transparent.png`);
-    } catch { setPhotoError("Could not download the transparent image."); }
+  async function exportImage(){
+    if(!processed||exporting)return;
+    setExporting(true);setError("");setSuccess("");
+    try{const blob=await currentExport();downloadBlob(blob,`${safeFilename(filename)}-${preset==="transparent"?"transparent":"studio"}.png`);setSuccess("Image downloaded successfully.");}
+    catch(e){setError(e instanceof Error?e.message:"Export failed.");}
+    finally{setExporting(false);}
   }
-  function update<K extends keyof ProductInput>(field: K, value: ProductInput[K]) {
-    setProduct(p => ({...p,[field]:value}));
-    setCopyResult(null); setCopyError("");
+  async function saveImage(){
+    if(!processed||saving)return;
+    setSaving(true);setError("");setSuccess("");
+    try{
+      const blob=await currentExport();
+      await saveProduct({id:generateId(),name:filename.trim()||"New Product",createdAt:Date.now(),preset, image:blob});
+      setSuccess("Project saved to My Products on this browser.");
+    }catch(e){setError(e instanceof Error?e.message:"Unable to save locally.");}
+    finally{setSaving(false);}
   }
-  async function generateCopy() {
-    if (generating) return;
-    if (!product.name.trim()) { setCopyError("Enter the product name first."); return; }
-    setGenerating(true); setCopyError("");
-    try {
-      const res = await fetch("/api/copy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(product)});
-      const json: CopyResult & {error?:string;warning?:string} = await res.json();
-      if (!res.ok) throw new Error(json.error || "Could not write product copy.");
-      setCopyResult(json);
-      if (json.warning) setCopyError(json.warning);
-    } catch (e) { setCopyError(e instanceof Error ? e.message : "Copywriter is unavailable."); }
-    finally { setGenerating(false); }
+  async function copyCommand(){
+    try{await navigator.clipboard.writeText("python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload");setSuccess("Python start command copied.");}
+    catch{setError("Clipboard blocked. Copy the command manually.");}
   }
-  async function copyValue(text: string,key: string) {
-    try { await navigator.clipboard.writeText(text); setCopied(key); window.setTimeout(()=>setCopied(""),1700); }
-    catch { setCopyError("Clipboard permission was blocked. Select and copy the text manually."); }
-  }
-  function exportText() {
-    if (!copyResult) return;
-    const text = [`Platform: ${product.platform}`,`Product: ${product.name}`,`Source: ${copyResult.source === "gemini" ? "Gemini AI draft" : "Local template draft"}`,"", "TITLE",copyResult.title,"", "DESCRIPTION",copyResult.description,"", "CAPTION",copyResult.caption,"", "HASHTAGS",copyResult.hashtags].join("\n");
-    downloadBlob(new Blob([text],{type:"text/plain;charset=utf-8"}),`${safeFilename(product.name)}-listing.txt`);
-  }
-
-  const activePreset = presets.find(p=>p.id===preset) || presets[0];
-  const hasChanges = adjustments.brightness!==100 || adjustments.contrast!==100 || adjustments.saturation!==100;
-
-  return <div className="studio-root">
-    <aside className="studio-sidebar">
-      <div className="sidebar-brand"><Brand light /></div>
-      <div className="sidebar-label">WORKSPACE</div>
-      <div className="sidebar-links">
-        <button className={`sidebar-link ${section==="photo"?"sidebar-link-active":""}`} onClick={()=>setSection("photo")}><ImageIcon size={19}/> Product Studio <ArrowRight size={15} className="sidebar-arrow"/></button>
-        <button className={`sidebar-link ${section==="copy"?"sidebar-link-active":""}`} onClick={()=>setSection("copy")}><PenLine size={19}/> AI Copywriter <ArrowRight size={15} className="sidebar-arrow"/></button>
-        <span className="sidebar-link sidebar-link-soon"><Layers3 size={19}/> My products <span>SOON</span></span>
-      </div>
-      <div className="sidebar-bottom">
-        <div className="local-info"><span className="local-signal"/><strong>Local development</strong><small>No database connected</small></div>
-        <Link href="/" className="sidebar-home"><Home size={17}/> Back to website</Link>
-      </div>
-    </aside>
-
-    <div className="studio-panel">
-      <header className="studio-topbar">
-        <div className="studio-mobile-brand"><Brand/></div>
-        <div className="studio-breadcrumb"><span>Workspace</span><ChevronDown size={13} className="breadcrumb-chevron"/><strong>{section==="photo"?"Product Studio":"AI Copywriter"}</strong></div>
-        <div className="studio-top-actions"><span className="dev-badge"><span/> DEVELOPMENT MODE</span><button className="help-button" title="How it works" aria-label="How it works" onClick={()=>setShowHelp(v=>!v)}><CircleHelp size={19}/></button></div>
-      </header>
-      {showHelp && <div className="help-banner"><strong>Quick start:</strong> Open the Studio, upload a real product image, run the Python background-removal worker, then customize and download. AI copy requires an optional Gemini API key; otherwise it's a template draft. <button onClick={()=>setShowHelp(false)} aria-label="Dismiss help"><X size={17}/></button></div>}
-      <div className="studio-mobile-tabs"><button onClick={()=>setSection("photo")} className={section==="photo"?"selected":""}><ImageIcon size={17}/> Photos</button><button onClick={()=>setSection("copy")} className={section==="copy"?"selected":""}><PenLine size={17}/> Copywriter</button></div>
-      <main className="studio-content">
-        <div className="page-heading">
-          <div><span className="studio-eyebrow"><Sparkles size={14}/> THE CREATIVE WORKSPACE</span><h1>{section==="photo"?"Product Photo Studio":"AI Listing Copywriter"}</h1><p>{section==="photo"?"Give every product the spotlight it deserves.":"Create cleaner product listings without starting from a blank page."}</p></div>
-          <div className="heading-badge"><MonitorCheck size={17}/><span>Made for online sellers</span></div>
+  const chosen=presets.find(p=>p.id===preset);
+  const style={filter:`brightness(${adjust.brightness}%) contrast(${adjust.contrast}%) saturate(${adjust.saturation}%)`,transform:`scale(${zoom/100})`,filterShadow:shadow} as const;
+  const imageStyle={filter:`${style.filter} ${shadow?"drop-shadow(0 18px 13px rgba(26,47,78,.18))":""}`, transform:style.transform};
+  const sideTools=[
+    {id:"remove",label:"Remove Background",icon:Eraser},
+    {id:"background",label:"Background",icon:Paintbrush},
+    {id:"adjust",label:"Adjustments",icon:SlidersHorizontal},
+    {id:"shadow",label:"Shadow & Effects",icon:Sparkles},
+    {id:"resize",label:"Resize",icon:Maximize2},
+    {id:"watermark",label:"Watermark / Logo",icon:Layers3}
+  ] as const;
+  return <AppShell title="Product Studio" description="Edit, transform and elevate your product images with AI." actions={<div className="studio-header-actions"><button className="ui-btn ui-btn-outline" onClick={()=>{setAdjust({brightness:100,contrast:100,saturation:100});setZoom(100);setShadow(true);setWatermark(false);setPreset("white");setCompare(false);setSuccess("Editor adjustments reset.");}}><RotateCcw size={15}/> Reset</button><button disabled={!processed||saving} onClick={saveImage} className="ui-btn ui-btn-primary">{saving?<LoaderCircle size={16} className="spin"/>:<Save size={16}/>} Save to My Products</button></div>}>
+    <div className="studio-main-grid">
+      <aside className="workspace-card editor-tool-panel">
+        <div className="edit-panel-title"><strong>Edit Tools</strong><span>PHOTO EDITOR</span></div>
+        <nav className="edit-tools-list" aria-label="Photo editing tools">{sideTools.map(t=><button key={t.id} onClick={()=>setActiveTool(t.id)} className={activeTool===t.id?"selected":""}><t.icon size={17}/><span>{t.label}</span><ChevronDown size={14} className="tool-chevron"/></button>)}</nav>
+        <div className="editor-tool-content">
+          {activeTool==="remove"&&<div className="tool-details"><h3><Scissors size={16}/> AI Background Removal</h3><p>Isolate the product using a real local AI model. No fake cutout overlay.</p><button onClick={()=>fileInput.current?.click()} className="ui-btn ui-btn-outline full-width"><Upload size={15}/> Choose Photo</button><button onClick={removeBackground} disabled={!file||processing} className="ui-btn ui-btn-primary full-width">{processing?<LoaderCircle size={16} className="spin"/>:<WandSparkles size={16}/>} {processing?"Processing…":processed?"Re-process Image":"Remove Background"}</button></div>}
+          {activeTool==="background"&&<div className="tool-details"><h3><Paintbrush size={16}/> Background Style</h3><p>Choose from transparent, white and four colorful studio looks.</p><div className="sidebar-swatches">{(["transparent",...presets.map(p=>p.id)] as StudioPreset[]).map(value=><button key={value} className={`side-swatch ${preset===value?"selected":""}`} title={value} aria-label={`Use ${value} background`} aria-pressed={preset===value} onClick={()=>setPreset(value)}><span className={value==="transparent"?"checker-swatch":`preset-${value}`}/></button>)}</div></div>}
+          {activeTool==="adjust"&&<div className="tool-details"><h3><SlidersHorizontal size={16}/> Fine-tune</h3>{(["brightness","contrast","saturation"] as const).map(k=><label className="tool-range" key={k}><span><strong>{k[0].toUpperCase()+k.slice(1)}</strong>{adjust[k]}%</span><input type="range" min={50} max={150} value={adjust[k]} onChange={e=>setAdjust(a=>({...a,[k]:Number(e.target.value)}))}/></label>)}<button className="text-reset" onClick={()=>setAdjust({brightness:100,contrast:100,saturation:100})}><RotateCcw size={14}/> Reset adjustments</button></div>}
+          {activeTool==="shadow"&&<div className="tool-details"><h3><Sparkles size={16}/> Shadow & Effects</h3><p>Add subtle grounding to your final export.</p><label className="tool-checkbox"><input type="checkbox" checked={shadow} onChange={e=>setShadow(e.target.checked)}/> Soft product shadow</label></div>}
+          {activeTool==="resize"&&<div className="tool-details"><h3><Maximize2 size={16}/> Export Size</h3><label className="tool-select"><span>Canvas dimensions</span><select value={exportSize} onChange={e=>setExportSize(e.target.value as ExportSize)}>{sizes.map(s=><option value={s.id} key={s.id}>{s.label}</option>)}</select></label><p>{sizes.find(s=>s.id===exportSize)?.dimensions}px output.</p></div>}
+          {activeTool==="watermark"&&<div className="tool-details"><h3><Layers3 size={16}/> Brand Watermark</h3><p>Uses the shop name from your Brand Kit, or ChanSeller if none is set.</p><label className="tool-checkbox"><input type="checkbox" checked={watermark} onChange={e=>setWatermark(e.target.checked)}/> Add a small brand label</label><Link href="/brand-kit" className="inline-link">Edit Brand Kit ↗</Link></div>}
         </div>
+        <div className="local-worker-box"><span className={`worker-light ${worker}`}/><div><strong>Local AI worker</strong><small>{worker==="checking"?"Checking connection...":worker==="online"?"Connected on port 8000":"Not running — setup required"}</small></div><button title="Worker setup steps" aria-label="Worker setup steps" onClick={()=>setShowWorkerHelp(v=>!v)}><CircleHelp size={17}/></button></div>
+      </aside>
 
-        {section==="photo" ? <>
-          <div className="studio-work-grid">
-            <div className="studio-left-col">
-              <section className="studio-card upload-card">
-                <div className="studio-card-head"><div><span className="section-step">STEP 01</span><h2>Upload your photo</h2></div><span className="small-tip">JPG, PNG or WebP</span></div>
-                <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>{receiveFile(e.target.files?.[0]);e.currentTarget.value="";}} aria-label="Choose a product photo"/>
-                {!file ? <div className={`drop-zone ${dragging?"drag-active":""}`} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ") inputRef.current?.click();}} onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);receiveFile(e.dataTransfer.files?.[0]);}} onClick={()=>inputRef.current?.click()}>
-                  <span className="drop-icon"><UploadCloud size={25}/></span><strong>Drag & drop your product photo</strong><small>or click to browse from your device</small><span className="drop-button">Browse files <ArrowRight size={15}/></span><span className="drop-limit">Maximum 8MB • Stored only in this session</span>
-                </div> : <div className="file-added"><div className="file-preview"><img src={original || ""} alt="Selected product"/></div><div className="file-copy"><strong title={file.name}>{file.name}</strong><small>{(file.size/1048576).toFixed(2)} MB • Uploaded locally</small></div><button onClick={clearPhoto} className="file-remove" aria-label="Remove photo"><X size={17}/></button></div>}
-                <button className="btn btn-purple process-button" disabled={!file||processing} onClick={removeBackground}>{processing?<LoaderCircle className="spin" size={17}/>:<Eraser size={17}/>} {processing?"Removing background…":cutout?"Re-run background removal":"Remove background with AI"}</button>
-                <p className="under-button"><ShieldCheck size={14}/> Processes through your local Python worker. First run downloads model weights.</p>
-                {photoError && <p className="error-message" role="alert">{photoError}</p>}
-              </section>
-              <section className="studio-card style-card"><div className="studio-card-head"><div><span className="section-step">STEP 02</span><h2>Choose a look</h2></div><Paintbrush size={18} className="head-icon"/></div>
-                <div className="preset-grid">{presets.map(p=><button key={p.id} className={`preset-choice ${preset===p.id?"preset-active":""}`} onClick={()=>setPreset(p.id)} aria-pressed={preset===p.id}><span className={`preset-swatch ${p.className}`}>{preset===p.id&&<Check size={18}/>}</span><span>{p.name}</span></button>)}</div>
-                <div className="adjustments-header"><div><SlidersHorizontal size={17}/><strong>Fine-tune</strong></div><button onClick={()=>setAdjustments({brightness:100,contrast:100,saturation:100})} disabled={!hasChanges}><RotateCcw size={14}/> Reset</button></div>
-                {(["brightness","contrast","saturation"] as const).map(k=><label className="slider-control" key={k}><span><strong>{k[0].toUpperCase()+k.slice(1)}</strong><small>{adjustments[k]}%</small></span><input type="range" min={k==="brightness"?60:50} max={k==="brightness"?140:150} value={adjustments[k]} onChange={e=>setAdjustments(v=>({...v,[k]:Number(e.target.value)}))}/></label>)}
-              </section>
-            </div>
-            <div className="studio-right-col">
-              <section className="studio-card preview-card">
-                <div className="studio-card-head"><div><span className="section-step">LIVE PREVIEW</span><h2>Your product, elevated.</h2></div>{cutout?<span className="success-tag"><Check size={14}/> Cutout ready</span>:<span className="preview-tag"><ImageIcon size={14}/> {original?"Original image":"Demo visual"}</span>}</div>
-                <div className="preview-area">
-                  {!original ? <div className="demo-preview"><div className="demo-glow"/><img src="/demo-bottle.svg" alt="Illustrative sample bottle, not a processed user image"/><div className="demo-caption"><span>✦</span> Sample look only — upload your own product to start</div></div> :
-                  <div className="comparison-preview">
-                    <div className="comparison-before"><img src={original} alt="Original product before background removal"/></div>
-                    {cutout && <><div className="comparison-after" style={{clipPath:`inset(0 ${100-comparison}% 0 0)`}}><div className={`comparison-backdrop ${activePreset.className}`}/><img src={cutout} alt="Product with removed background" style={{filter:`brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`}}/></div><div className="comparison-line" style={{left:`${comparison}%`}}><span><ArrowLeft size={12}/><ArrowRight size={12}/></span></div><input className="comparison-slider" type="range" min={0} max={100} value={comparison} onChange={e=>setComparison(Number(e.target.value))} aria-label="Drag to compare original and processed image"/></>}
-                    <span className="comparison-original-label">BEFORE</span>{cutout&&<span className="comparison-after-label">AFTER</span>}
-                    {!cutout&&<div className="preview-unprocessed">Remove the background to see your studio look.</div>}
-                  </div>}
-                </div>
-                <div className="preview-meta"><div><span className="preview-meta-dot"/><span>{cutout?"AI background removed":"Awaiting product cutout"}</span></div><span>{cutout?"Move slider to compare":"Local preview"}</span></div>
-              </section>
-              <section className="studio-card download-card"><div className="studio-card-head"><div><span className="section-step">STEP 03</span><h2>Export your masterpiece</h2></div><Download size={19} className="head-icon"/></div>
-                <div className="download-actions"><button disabled={!cutout||exporting} onClick={exportStudio} className="btn btn-purple">{exporting?<LoaderCircle size={17} className="spin"/>:<ArrowDownToLine size={18}/>} {exporting?"Exporting…":"Download studio PNG"}</button><button disabled={!cutout} onClick={exportTransparent} className="btn btn-outline"><Download size={17}/> Transparent PNG</button></div><p className="export-note">Studio export is 1200 × 1200px. The transparent export keeps your original cutout. You must remove the background before export.</p>
-              </section>
-              <button className="copy-nudge" onClick={()=>setSection("copy")}><span className="nudge-icon"><PenLine size={21}/></span><span><strong>Now make it sell.</strong><small>Turn your product details into captions and listings.</small></span><ArrowRight size={19}/></button>
-            </div>
-          </div>
-        </> : <div className="copy-grid">
-          <section className="studio-card copy-input-card"><div className="studio-card-head"><div><span className="section-step">YOUR PRODUCT</span><h2>Tell us about it</h2></div><FileText size={19} className="head-icon"/></div>
-            <div className="form-fields"><label className="field"><span>Product name <b>*</b></span><input maxLength={120} placeholder="e.g. Ribbed Cotton Tote Bag" value={product.name} onChange={e=>update("name",e.target.value)}/></label>
-              <label className="field"><span>Category</span><input placeholder="e.g. Bags & Accessories" maxLength={90} value={product.category} onChange={e=>update("category",e.target.value)}/></label>
-              <label className="field"><span>Verified features & details</span><textarea placeholder="Material, size, color, included items, and other details you can verify…" maxLength={1200} rows={5} value={product.features} onChange={e=>update("features",e.target.value)}/><small>Only enter true details. AI is instructed not to invent product claims.</small></label>
-              <label className="field"><span>Price (optional)</span><input placeholder="e.g. ₱349" maxLength={60} value={product.price} onChange={e=>update("price",e.target.value)}/></label>
-              <div className="field-row"><label className="field"><span>Marketplace</span><select value={product.platform} onChange={e=>update("platform",e.target.value as Platform)}>{(["Shopee","Lazada","TikTok Shop","Facebook","Instagram"] as Platform[]).map(v=><option key={v}>{v}</option>)}</select></label><label className="field"><span>Tone</span><select value={product.tone} onChange={e=>update("tone",e.target.value as Tone)}>{(["Friendly","Premium","Playful","Minimal"] as Tone[]).map(v=><option key={v}>{v}</option>)}</select></label></div>
-              <label className="field"><span>Language</span><select value={product.language} onChange={e=>update("language",e.target.value as Language)}>{(["Taglish","English","Filipino"] as Language[]).map(v=><option key={v}>{v}</option>)}</select></label>
-              <button className="btn btn-purple process-button" onClick={generateCopy} disabled={generating}>{generating?<LoaderCircle className="spin" size={18}/>:<WandSparkles size={18}/>} {generating?"Writing your draft…":"Generate listing copy"}</button>{copyError&&<p className={copyResult?"notice-message":"error-message"} role="status">{copyError}</p>}
-              <p className="under-button"><ShieldCheck size={14}/> Gemini is optional. Without a key, you'll get a clearly labeled template draft.</p>
-            </div>
-          </section>
-          <section className="studio-card copy-output-card"><div className="studio-card-head"><div><span className="section-step">YOUR CONTENT</span><h2>Ready to copy & paste</h2></div>{copyResult?<span className={copyResult.source==="gemini"?"success-tag":"preview-tag"}>{copyResult.source==="gemini"?"Gemini AI draft":"Local template draft"}</span>:<span className="preview-tag">Not generated</span>}</div>
-            {!copyResult?<div className="copy-empty"><span><Sparkles size={34}/></span><h3>Your words, but a little more magical.</h3><p>Enter product details on the left, then generate ready-to-review listing content for your shop.</p></div>:<div className="result-list">
-              {([{key:"title",label:"Product title",value:copyResult.title},{key:"description",label:"Product description",value:copyResult.description},{key:"caption",label:"Marketing caption",value:copyResult.caption},{key:"hashtags",label:"Hashtags",value:copyResult.hashtags}] as const).map(r=><div className="result-card" key={r.key}><div className="result-head"><strong>{r.label}</strong><button onClick={()=>copyValue(r.value,r.key)}><ClipboardCopy size={14}/>{copied===r.key?"Copied!":"Copy"}</button></div><div className="result-text">{r.value}</div></div>)}
-              <button className="btn btn-outline export-text" onClick={exportText}><Download size={16}/> Download listing (.txt)</button><p className="export-note">AI drafts can contain mistakes. Review all product information, policies, and claims before posting.</p>
-            </div>}
-          </section>
-        </div>}
-      </main>
+      <section className="workspace-card editor-canvas-card">
+        <div className="canvas-toolbar"><div className="canvas-tabset"><span className="canvas-tab-current">Result</span><button onClick={()=>{if(processed)setCompare(v=>!v);}} disabled={!processed} className={compare?"canvas-tab-active":""}>Before / After</button></div><div className="canvas-icon-actions"><button onClick={()=>fileInput.current?.click()} title="Upload another image" aria-label="Upload another image"><ImagePlus size={17}/></button>{file&&<button onClick={clearFile} title="Clear image" aria-label="Clear image"><X size={17}/></button>}</div></div>
+        <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Choose product image" onChange={e=>{takeFile(e.target.files?.[0]);e.currentTarget.value="";}}/>
+        <div className={`editor-canvas ${preset==="transparent"?"checker-canvas":""}`} onDragOver={e=>{e.preventDefault();setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={e=>{e.preventDefault();setDrag(false);takeFile(e.dataTransfer.files?.[0]);}}>
+          {processed ? <div className="canvas-render" style={preset==="transparent"?undefined:{background:chosen?`linear-gradient(135deg,${chosen.colors[0]},${chosen.colors[1]})`:"#fff"}}>
+            <img src={processed} alt="Product with its original background removed" className="canvas-main-image" style={imageStyle}/>
+            {watermark&&<span className="watermark-preview">BRAND WATERMARK</span>}
+            {compare&&source&&<><div className="canvas-before" style={{clipPath:`inset(0 ${100-split}% 0 0)`}}><img src={source} alt="Original product for before and after comparison"/></div><div className="canvas-split-line" style={{left:`${split}%`}}><span><ArrowLeftRight size={15}/></span></div><input type="range" min="0" max="100" value={split} onChange={e=>setSplit(Number(e.target.value))} className="canvas-split-range" aria-label="Move before and after comparison"/></>}
+          </div>:source?<div className="canvas-original"><img src={source} alt="Product image before AI background removal" className="canvas-main-image"/><span className="canvas-original-label">Original photo · Run background removal for editing</span></div>:
+          <button className={`canvas-upload-prompt ${drag?"canvas-drag":""}`} onClick={()=>fileInput.current?.click()}><span className="canvas-prompt-icon"><UploadCloud size={30}/></span><strong>Drop your product image here</strong><span>or click to browse files</span><small>JPG, PNG or WebP · Max 8 MB</small></button>}
+          {processing&&<div className="canvas-loading"><LoaderCircle size={35} className="spin"/><strong>Removing background...</strong><p>First run may take longer while the AI model downloads.</p></div>}
+        </div>
+        <div className="canvas-bottom-toolbar"><div><button title="Reset zoom" onClick={()=>setZoom(100)}><RotateCcw size={16}/></button><span className="canvas-toolbar-divider"/><button onClick={()=>setZoom(z=>Math.max(60,z-10))} aria-label="Zoom out">−</button><span>{zoom}%</span><button onClick={()=>setZoom(z=>Math.min(150,z+10))} aria-label="Zoom in">+</button></div><span className="canvas-footnote"><MonitorCheck size={15}/> {processed?"AI cutout ready":"Preview mode"}</span></div>
+        <label className="studio-name-field"><span>PROJECT NAME</span><input maxLength={90} value={filename} onChange={e=>setFilename(e.target.value)} aria-label="Project name"/></label>
+      </section>
+
+      <aside className="workspace-card editor-export-panel">
+        <div className="edit-panel-title"><strong>Background</strong><span>APPEARANCE</span></div>
+        <div className="background-grid">{([{id:"transparent",name:"Transparent"},...presets.map(p=>({id:p.id,name:({white:"White",peach:"Warm peach",lavender:"Soft lilac",mint:"Fresh mint",midnight:"Midnight"} as Record<string,string>)[p.id]}))] as {id:StudioPreset;name:string}[]).map(option=>
+          <button className={`background-choice ${preset===option.id?"background-selected":""}`} onClick={()=>setPreset(option.id)} key={option.id}>
+            <span className={option.id==="transparent"?"checker-swatch":`preset-${option.id}`}>{option.id!=="transparent"&&<img src="/demo-headphones.svg" alt=""/>}</span>
+            <small>{option.name}</small>
+          </button>)}</div>
+        <div className="export-panel-separator"/>
+        <div className="export-panel-options"><label>Export size</label><select value={exportSize} onChange={e=>setExportSize(e.target.value as ExportSize)}>{sizes.map(s=><option value={s.id} key={s.id}>{s.label} ({s.dimensions})</option>)}</select><p><CheckCircle2 size={15}/> PNG · high-quality output</p></div>
+        <button disabled={!processed||exporting} onClick={exportImage} className="ui-btn ui-btn-primary full-width">{exporting?<LoaderCircle size={17} className="spin"/>:<Download size={18}/>} Download Image</button>
+        <button disabled={!processed||saving} onClick={saveImage} className="ui-btn ui-btn-outline full-width"><Save size={17}/> Save to My Products</button>
+        <div className="export-assurance"><ShieldCheck size={17}/><p>No image is sent to a third-party image API. Processing goes to your own local Python worker.</p></div>
+      </aside>
     </div>
-  </div>;
+    {(error||success||showWorkerHelp)&&<section className="studio-messages" aria-live="polite">{error&&<div className="ui-error">{error}</div>}{success&&<div className="ui-success"><Check size={16}/>{success}</div>}{showWorkerHelp&&<div className="feature-notice"><CloudOff size={20}/><div><strong>Start the free AI image worker in another PowerShell terminal</strong><p>From D:\chanseller, run the Python setup described in the README. Once installed, activate its virtual environment and use this command:</p><code>python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload</code><div className="worker-actions"><button className="ui-btn ui-btn-outline" onClick={copyCommand}><Copy size={15}/> Copy command</button><a href="https://github.com/luffylines/chanseller#run-locally-two-terminals" target="_blank" rel="noreferrer" className="ui-btn ui-btn-outline">Setup instructions ↗</a><button onClick={()=>{setWorker("checking");fetch(`${base}/health`,{signal:AbortSignal.timeout(3500)}).then(r=>setWorker(r.ok?"online":"offline")).catch(()=>setWorker("offline"));}} className="ui-btn ui-btn-primary"><RotateCcw size={15}/> Check worker</button></div></div></div>}</section>}
+  </AppShell>;
 }

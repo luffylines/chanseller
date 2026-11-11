@@ -1,2 +1,2 @@
 import { StudioApp } from "@/components/studio";
-export default function StudioPage() { return <StudioApp />; }
+export default function StudioPage(){return <StudioApp/>;}

@@ -1,88 +1,114 @@
-# ChanSeller — SellerBoost AI
+# ChanSeller — AI Product Studio for Online Sellers
 
-A **local-first product photo and listing studio** for Philippine online sellers. Built as a separate project from SKVASRA and other apps.
+A modern, light-blue **local-first SellerBoost AI website** with a public landing page, seller dashboard, photo editor, listing copywriter, and supporting seller tools.
 
-> **Current stage: development preview.** Code lives in this GitHub repository. **No Vercel deployment, database, accounts, payments, or automatic marketplace posting.** Pricing on the site is illustrative.
+[Open the source code](https://github.com/luffylines/chanseller)
 
-## What works
+> **Development preview only.** This repository has **not** been deployed to Vercel or connected to Supabase, MySQL, or any other cloud database. Login, payment and commercial subscriptions are not active. Local product projects are saved to **IndexedDB on this browser**.
 
-- Premium responsive landing page and product studio (Next.js + React + Tailwind).
-- Upload a JPG/PNG/WebP product photo (max 8 MB).
-- **Real AI background removal** through a separate **local Python worker** using `rembg` and the explicitly selected U2Net model. Not a CSS-only or fake removal feature.
-- Choose studio white, peach, lavender, mint, or dark backgrounds.
-- Adjust brightness, contrast and saturation; preview original vs cutout.
-- Export a transparent PNG or a composited **1200 × 1200** studio PNG, all processed in the browser after segmentation.
-- Generate titles, descriptions, captions and hashtags. Optional Gemini API integration, with a transparently labeled **template draft** when no key is set / provider is unavailable.
-- No images or captions are persisted in a database.
+## Included pages
 
-## Prerequisites
+| Route | Function |
+|---|---|
+| `/` | Premium light-blue public marketing homepage |
+| `/dashboard` | Seller dashboard, real local counts, quick tools, recent products |
+| `/studio` | Photo upload, real AI background cutout, presets, adjustments, export sizes, before/after, PNG download, save to products |
+| `/copywriter` | Product details, marketplace selection, optional Gemini AI copy, local draft save, clipboard and TXT export |
+| `/products` | View, search, preview, download and delete saved photos |
+| `/templates` | Select a studio background and open it in the editor |
+| `/brand-kit` | Save shop name, tagline, brand color and tone locally |
+| `/usage` | Show actual local saved image and draft counts |
+| `/settings` | Local profile preferences, storage status, delete local data |
+| `/pricing` | Proposed future plans, **not purchasable** |
+| `/login`, `/register` | Authentication **preview only**; no false sign-in or password storage |
 
-- Node.js 22+ recommended
-- Python 3.11–3.13
-- Windows PowerShell, macOS or Linux
-- Internet on first background-removal run to download model weights (local cache, model size can be significant)
-- Optional Gemini API key for true AI-generated copy
+Product images and saved drafts are stored in the browser's **IndexedDB**. Brand kit and profile preferences are stored in **localStorage**. This works on the same browser/device only. Browser data can be cleared, so don't rely on it as a production backup.
 
-## Run locally (two terminals)
+## Requirements
 
-**Terminal 1 — Web UI**
+- Node.js **22 or newer** recommended.
+- Python **3.11 to 3.13** for the image worker.
+- Internet connection for initial package/model installation. Once downloaded, model inference runs locally.
+- An optional **Gemini API key** for truly AI-generated product text.
 
-```bash
-git clone https://github.com/luffylines/chanseller.git
-cd chanseller
-npm install
-cp .env.example .env.local
-npm run dev
+## 1. Start the website on Windows (PowerShell)
+
+```powershell
+cd D:\chanseller
+npm.cmd install
+Copy-Item .env.example .env.local
+npm.cmd run dev
 ```
 
-On Windows PowerShell use `Copy-Item .env.example .env.local` instead of `cp`. Open **http://localhost:3000** and click **Open Studio**.
+Using `npm.cmd` avoids Windows PowerShell's disabled `npm.ps1` execution policy. You do **not** need to weaken Windows script security to install dependencies.
 
-**Terminal 2 — Image worker**
+Open **http://localhost:3000**.
 
-```bash
-cd chanseller
-python -m venv .venv
+## 2. Start the image AI in a SECOND PowerShell terminal
+
+The free Python model does actual segmentation and removes the background. The frontend cannot remove the background until this second service is running.
+
+**Easy Windows command** (from the repository root):
+
+```powershell
+cd D:\chanseller
+.\scripts\Start-Local-AI.ps1
 ```
 
-Activate on PowerShell: `.\.venv\Scripts\Activate.ps1`. Activate on macOS/Linux: `source .venv/bin/activate`.
+If PowerShell blocks scripts, use these **manual commands** instead. They do not require activating a `.ps1` file:
 
-```bash
-python -m pip install -r backend/requirements.txt
-python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload
+```powershell
+cd D:\chanseller
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Check **http://127.0.0.1:8000/health**. Uploaded images are sent only to the **local** worker. The worker never writes uploaded photos to disk or a database. The model itself downloads and caches local weights on first use.
+If you installed Python 3.12 instead, replace `py -3.11` with `py -3.12`. If the Python launcher is unavailable, try `python -m venv .venv`.
 
-### Optional real AI copywriting
+Check **http://127.0.0.1:8000/health** in your browser. The worker downloads the U2Net weights on the **first actual background-removal request**, which can be slow. The model runs on the local CPU and may take some time for large photos.
 
-Set `GEMINI_API_KEY=your_key` in **.env.local** (do not commit this file), then restart Next.js. Only text fields you type in the copywriter are sent server-to-server to Google. If no key is present, the UI explicitly says "Template draft" — not AI.
+After the worker starts, refresh **http://localhost:3000/studio**. Its sidebar should show **Local AI worker · Connected**.
 
-## Security & license notes
+## 3. Optional Gemini AI descriptions and captions
 
-- This is a **local development project**, not a hardened commercial multi-user service. Do not expose port 8000 publicly.
-- All product photo processing is performed by your own worker; **no photo persistence** is implemented.
-- `rembg` is MIT-licensed. Model weights have **separate licenses**: this starter explicitly selects U2Net rather than rembg's newer default. Recheck upstream model licensing and provenance before commercial launch.
-- Uploaded file types, size, and image dimensions are checked server-side. The worker currently has **no authentication** and should be kept on localhost.
-- Review all generated copy before publishing. No product specification is verified automatically.
-- Add per-account quotas, anti-abuse, RLS and billing controls before offering paid plans.
+1. Create a Google AI Studio Gemini API key.
+2. In `.env.local`, set `GEMINI_API_KEY=your_key_here`.
+3. Restart `npm.cmd run dev`.
+4. Visit `/copywriter`, enter factual product information and press **Generate with AI**.
 
-## Quality checks
+**Without a key or when Gemini fails:** The app returns **Local template draft**, clearly labeled so it is never confused with AI. Only the text fields you entered (not your product photo) are sent to Gemini when configured.
 
-```bash
-npm run typecheck
-npm run build
-python -m py_compile backend/app.py
+## Product Studio workflow
+
+1. Open `/studio` and upload JPG, PNG or WebP (max 8 MB).
+2. Run **Remove Background** (requires the Python worker).
+3. Select a background. **Transparent** export produces a transparent PNG.
+4. Use Adjustments, Shadow, Resize and Brand Watermark.
+5. Move the Before/After slider to compare.
+6. Download PNG or **Save to My Products** (browser-only storage).
+
+Studio outputs: Square 1200×1200, Portrait 1080×1350 or Story 1080×1920. Transparency is exported at the original cutout's resolution.
+
+AI-generated lifestyle scenes (photorealistic rooms, models, textures) and one-click posting to Shopee/Lazada/TikTok are **not** implemented; current backgrounds are gradient studio presets. Do not claim otherwise.
+
+## No shared database / no Vercel
+
+ChanSeller is completely separate from SKVASRA, Fun Run and other systems. No credentials, tables, storage buckets, or deployment projects have been reused. A planned production database architecture is described in [docs/database-plan.md](docs/database-plan.md).
+
+## Tests
+
+```powershell
+npm.cmd run typecheck
+npm.cmd run build
+.\.venv\Scripts\python.exe -m py_compile backend\app.py
 ```
 
-GitHub Actions runs static frontend and Python syntax checks; it **does not deploy**.
+GitHub Actions performs TypeScript, Next.js build and Python syntax checks **without deploying**. Image-cutout quality on real photos and browser IndexedDB behavior still require manual local testing.
 
-## Separate database (later)
+## Free AI and licensing
 
-See [docs/database-plan.md](docs/database-plan.md). ChanSeller will have a **brand-new isolated database**, never share data/keys from other projects, and will not connect a database until explicitly requested.
-
-## Roadmap
-
-1. Test quality of U2Net cutouts on real seller photos and improve edge matting.
-2. Add genuine creative backgrounds (licensed image-generation provider, not a fake CSS approximation), with a clear paid/credit-gated workflow.
-3. Add independent Supabase auth + workspace-scoped RLS after approval.
-4. Build asset history, projects, safe credit limits, marketplace exports, billing and monitored production hosting when ready.
+- `rembg` is MIT licensed. The chosen U2Net model is downloaded separately and has its own rights/license; verify model provenance and its terms before commercial launch.
+- Google Gemini has usage caps/quotas that vary by account, region and model; don't rely on permanent unlimited free usage.
+- Never publish service API keys to the browser or GitHub.
+- No login or billing functions are simulated as completed operations.
