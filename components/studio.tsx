@@ -142,6 +142,7 @@ export function StudioApp(){
       if(preset==="transparent"){const res=await fetch("/demo-headphones.svg");return res.blob();}
       return createStudioExport("/demo-headphones.svg",actualPreset,adjust,{size:exportSize,shadow,watermark:""});
     }
+    if(!processed)throw new Error("Remove the background before exporting.");
     if(preset==="transparent"){
       const response=await fetch(processed);return response.blob();
     }
