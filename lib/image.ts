@@ -36,10 +36,11 @@ export async function createStudioExport(src:string,preset:PresetId,adjust:Adjus
   if(options?.shadow!==false){
     const sx=width/2,sy=Math.min(height*.87,dy+drawH+height*.035);
     const radius=Math.max(drawW*.55,width*.11);
-    const grad=ctx.createRadialGradient(sx,sy,0,sx,sy,radius);
+    ctx.save();ctx.translate(sx,sy);ctx.scale(1,.23);
+    const grad=ctx.createRadialGradient(0,0,0,0,0,radius);
     grad.addColorStop(0,preset==="midnight"?"rgba(0,0,0,.38)":"rgba(35,51,72,.20)");
     grad.addColorStop(1,"rgba(30,40,50,0)");
-    ctx.save();ctx.translate(sx,sy);ctx.scale(1,.23);ctx.fillStyle=grad;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.fillStyle=grad;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();ctx.restore();
   }
   ctx.save();ctx.filter=`brightness(${adjust.brightness}%) contrast(${adjust.contrast}%) saturate(${adjust.saturation}%)`;
   ctx.drawImage(temp,minX,minY,sw,sh,dx,dy,drawW,drawH);ctx.restore();
