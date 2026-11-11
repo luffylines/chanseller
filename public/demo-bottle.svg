@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 560">
+<defs><linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e0b1df"/><stop offset=".37" stop-color="#c17dca"/><stop offset=".8" stop-color="#995ca9"/><stop offset="1" stop-color="#784291"/></linearGradient>
+<linearGradient id="lid" x1="0" x2="1"><stop stop-color="#eee6f5"/><stop offset=".45" stop-color="#fff"/><stop offset="1" stop-color="#ad9abb"/></linearGradient>
+<linearGradient id="label" x1="0" x2="1"><stop stop-color="#fffaf7"/><stop offset="1" stop-color="#eadce7"/></linearGradient>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="14"/></filter>
+</defs>
+<ellipse cx="260" cy="518" rx="154" ry="21" fill="#75618f" opacity=".23" filter="url(#shadow)"/>
+<g transform="translate(80 17) rotate(-8 180 300)">
+<rect x="145" y="50" width="70" height="73" rx="11" fill="url(#lid)"/>
+<rect x="132" y="99" width="96" height="32" rx="12" fill="#e7deea"/>
+<rect x="90" y="120" width="180" height="350" rx="46" fill="url(#glass)" stroke="#fff" stroke-opacity=".55" stroke-width="4"/>
+<path d="M118 149 Q104 240 114 415" fill="none" stroke="#fff" opacity=".44" stroke-width="12" stroke-linecap="round"/>
+<rect x="108" y="226" width="144" height="157" rx="11" fill="url(#label)"/>
+<text x="180" y="260" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#775984" letter-spacing="4">AURA</text>
+<path d="M158 279 Q179 266 201 279" fill="none" stroke="#aa88b5" stroke-width="2"/>
+<text x="180" y="315" text-anchor="middle" font-family="Georgia,serif" font-size="26" fill="#574263">Bloom</text>
+<text x="180" y="339" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#7c7284" letter-spacing="2.7">BODY SERUM</text>
+<text x="180" y="364" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#9b90a5">120 ml / 4 fl oz</text>
+</g></svg>
