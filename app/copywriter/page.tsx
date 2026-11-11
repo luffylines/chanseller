@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { type CopyResult, type Language, type Platform, type ProductInput, type Tone } from "@/lib/copy";
 import { generateId, getDrafts, saveDraft, type SavedDraft } from "@/lib/local-data";
 import { downloadBlob, safeFilename } from "@/lib/image";
-import { ArrowRight, Check, ClipboardCopy, Download, FilePenLine, FileText, Globe, History, LoaderCircle, PenLine, Save, Sparkles, WandSparkles } from "lucide-react";
+import { ArrowRight, Check, ClipboardCopy, Download, Facebook, FilePenLine, FileText, Globe, History, Instagram, LoaderCircle, Music2, PenLine, Save, ShoppingBag, Sparkles, WandSparkles } from "lucide-react";
 
 const initial:ProductInput={name:"",category:"",features:"",price:"",platform:"Shopee",tone:"Friendly",language:"Taglish"};
 const platforms:Platform[]=["Shopee","Lazada","TikTok Shop","Facebook","Instagram"];
@@ -62,7 +62,7 @@ export default function CopywriterPage(){
           <label className="form-field">Category <span className="field-optional">Optional</span><input placeholder="e.g. Electronics & Accessories" maxLength={90} value={product.category} onChange={e=>update("category",e.target.value)}/></label>
           <label className="form-field">Product details <span className="field-optional">Only real, verified facts</span><textarea placeholder="e.g. Bluetooth 5.3, foldable, white color, 40-hour battery life if verified" rows={5} maxLength={1200} value={product.features} onChange={e=>update("features",e.target.value)}/></label>
           <label className="form-field">Price <span className="field-optional">Optional</span><input placeholder="₱ 0.00" maxLength={60} value={product.price} onChange={e=>update("price",e.target.value)}/></label>
-          <div className="form-field"><span>Target platform</span><div className="platform-chips">{platforms.map(p=><button aria-pressed={product.platform===p} className={product.platform===p?"selected":""} key={p} onClick={()=>update("platform",p)}>{p}</button>)}</div></div>
+          <div className="form-field"><span>Target platform</span><div className="platform-chips">{platforms.map(p=><button aria-pressed={product.platform===p} className={`platform-chip platform-${p.toLowerCase().replace(/\W+/g,"-")} ${product.platform===p?"selected":""}`} key={p} onClick={()=>update("platform",p)}><span className="platform-logo">{p==="Shopee"?<ShoppingBag size={12}/>:p==="Lazada"?<span>♥</span>:p==="TikTok Shop"?<Music2 size={12}/>:p==="Facebook"?<Facebook size={12}/>:<Instagram size={12}/>}</span>{p}</button>)}</div></div>
           <div className="form-two-col"><label className="form-field">Writing tone<select value={product.tone} onChange={e=>update("tone",e.target.value as Tone)}>{tones.map(t=><option key={t}>{t}</option>)}</select></label><label className="form-field">Language<select value={product.language} onChange={e=>update("language",e.target.value as Language)}>{languages.map(t=><option key={t}>{t}</option>)}</select></label></div>
           <button disabled={generating} className="ui-btn ui-btn-primary full-width generate-button" onClick={generate}>{generating?<LoaderCircle size={17} className="spin"/>:<Sparkles size={17}/>} {generating?"Generating…":"Generate with AI"} <ArrowRight size={17}/></button>
           <div className="copywriter-note"><Globe size={16}/><span>AI generation needs your own Gemini API key. Otherwise a clearly labeled local template is created. Only typed copy fields are sent to Gemini when enabled.</span></div>

@@ -12,10 +12,11 @@ export default function ProductsPage() {
   const [loading,setLoading]=useState(true);
   const [urls,setUrls]=useState<Record<string,string>>({});
   const [query,setQuery]=useState("");
+  const [sort,setSort]=useState<"newest"|"oldest"|"az">("newest");
   const [error,setError]=useState("");
   const [selected,setSelected]=useState<string|null>(null);
   const [busy,setBusy]=useState<string|null>(null);
-  const filtered=useMemo(()=>items.filter(p=>p.name.toLowerCase().includes(query.toLowerCase())),[items,query]);
+  const filtered=useMemo(()=>items.filter(p=>p.name.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>sort==="oldest"?a.createdAt-b.createdAt:sort==="az"?a.name.localeCompare(b.name):b.createdAt-a.createdAt),[items,query,sort]);
   useEffect(()=>{
     let active=true;
     getProducts().then(products=>{
@@ -39,7 +40,7 @@ export default function ProductsPage() {
   }
   const active=items.find(i=>i.id===selected);
   return <AppShell title="My Products" description="All the studio images you've saved on this device." actions={<Link href="/studio" className="ui-btn ui-btn-primary"><Plus size={17}/> New Project</Link>}>
-    <div className="section-toolbar"><div className="search-field"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search products..." aria-label="Search saved products"/></div><span className="section-toolbar-note">{items.length} saved project{items.length===1?"":"s"}</span></div>
+    <div className="section-toolbar"><div className="search-field"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search products..." aria-label="Search saved products"/></div><div className="products-filter-controls"><select aria-label="Sort products" value={sort} onChange={e=>setSort(e.target.value as "newest"|"oldest"|"az")}><option value="newest">All Products · Newest</option><option value="oldest">Oldest first</option><option value="az">Name A to Z</option></select><span className="section-toolbar-note">{items.length} saved project{items.length===1?"":"s"}</span></div></div>
     {error&&<p className="ui-error">{error}</p>}
     {loading?<div className="empty-slate"><Package size={33}/><h2>Loading your projects…</h2></div>:
     items.length===0?<div className="empty-slate"><span className="empty-icon"><Package size={32}/></span><h2>Your product library starts here.</h2><p>Create a studio photo, click Save to My Products, and it'll show up here. Saved images live in this browser until you delete them.</p><Link href="/studio" className="ui-btn ui-btn-primary"><ImagePlus size={17}/> Open Product Studio</Link></div>:

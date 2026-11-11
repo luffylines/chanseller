@@ -4,11 +4,11 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, ChartNoAxesCombined, Check, FilePenLine, ImagePlus, Images, Layers3, Package, PenLine, Plus, Sparkles, WandSparkles, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { getDrafts, getProducts, type SavedProduct } from "@/lib/local-data";
+import { getDrafts, getProducts, getUsage, type SavedProduct } from "@/lib/local-data";
 
 const examples = [
-  {name:"Wireless Headphones",image:"/demo-headphones.svg",background:"ice"},
-  {name:"Everyday Tote",image:"/demo-tote.svg",background:"sand"},
+  {name:"White Sneakers",image:"/demo-shoe.svg",background:"ice"},
+  {name:"Everyday Backpack",image:"/demo-backpack.svg",background:"sand"},
   {name:"Water Bottle",image:"/demo-bottle-blue.svg",background:"blush"},
   {name:"Sunglasses",image:"/demo-sunglasses.svg",background:"sage"},
   {name:"Classic Watch",image:"/demo-watch.svg",background:"stone"}
@@ -22,13 +22,14 @@ const actions = [
 export default function Dashboard() {
   const [projects,setProjects]=useState<SavedProduct[]>([]);
   const [drafts,setDrafts]=useState(0);
+  const [localRuns,setLocalRuns]=useState({imageRuns:0,textRuns:0});
   const [previews,setPreviews]=useState<Record<string,string>>({});
   const [error,setError]=useState("");
   useEffect(()=>{
     let alive=true;
     Promise.all([getProducts(),getDrafts()]).then(([p,d])=>{
       if (!alive) return;
-      setProjects(p);setDrafts(d.length);
+      setProjects(p);setDrafts(d.length);setLocalRuns(getUsage());
       const urls:Record<string,string>={};
       p.forEach(item=>{urls[item.id]=URL.createObjectURL(item.image);});
       setPreviews(urls);
@@ -37,13 +38,12 @@ export default function Dashboard() {
   },[]);
   useEffect(()=>()=>Object.values(previews).forEach(url=>URL.revokeObjectURL(url)),[previews]);
   const metrics=[
-    {title:"Images Saved",value:projects.length,icon:Images,note:"Local projects",tone:"blue"},
-    {title:"Listing Drafts",value:drafts,icon:FilePenLine,note:"Saved in browser",tone:"mint"},
-    {title:"Workspaces",value:1,icon:Package,note:"Your local workspace",tone:"pink"},
-    {title:"Your Plan",value:"Preview",icon:Zap,note:"No active billing",tone:"violet"}
+    {title:"Images Processed",value:localRuns.imageRuns,icon:Images,note:"Actual local AI cutouts",tone:"blue"},
+    {title:"Listings Generated",value:localRuns.textRuns,icon:FilePenLine,note:"AI and template runs",tone:"mint"},
+    {title:"AI Credits Used",value:"—",icon:Zap,note:"Cloud credits not enabled",tone:"pink"},
+    {title:"Plan",value:"Free",icon:Package,note:"Local preview",tone:"violet"}
   ];
   return <AppShell title="Your Seller Dashboard" description="Create, edit and manage product assets from one beautiful workspace." actions={<Link href="/studio" className="ui-btn ui-btn-primary"><Plus size={17}/> New Project</Link>}>
-    <div className="welcome-banner"><div><span className="welcome-eyebrow"><Sparkles size={14}/> GOOD TO SEE YOU</span><h2>Ready to make something amazing? <span>✦</span></h2><p>Turn everyday product photos into better-looking listings.</p><Link className="welcome-button" href="/studio">Start creating <ArrowRight size={16}/></Link></div><div className="welcome-art" aria-hidden="true"><div className="welcome-sun"/><img src="/demo-headphones.svg" alt=""/></div></div>
     <section className="dashboard-metrics">{metrics.map(item=><div className="metric-card" key={item.title}><div className="metric-top"><span className={`metric-icon ${item.tone}`}><item.icon size={18}/></span><span className="metric-name">{item.title}</span></div><strong>{item.value}</strong><span className="metric-note">{item.note}</span></div>)}</section>
     <section className="content-section">
       <div className="content-section-heading"><div><h2>Quick Actions</h2><p>The fastest way to create something new.</p></div><Link href="/templates">Explore tools <ArrowRight size={15}/></Link></div>

@@ -89,6 +89,7 @@ export async function eraseLocalData(): Promise<void> {
   if (typeof window !== "undefined") {
     window.localStorage.removeItem("chanseller-brand-kit");
     window.localStorage.removeItem("chanseller-profile");
+    window.localStorage.removeItem("chanseller-operation-counts");
   }
 }
 export function formatDate(timestamp: number) {
@@ -96,4 +97,22 @@ export function formatDate(timestamp: number) {
 }
 export function generateId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+/** Real local operation counts, not a paid API credit balance. */
+export type LocalUsage={imageRuns:number;textRuns:number};
+export function getUsage():LocalUsage{
+  if(typeof window==="undefined")return {imageRuns:0,textRuns:0};
+  try{
+    const value=JSON.parse(window.localStorage.getItem("chanseller-operation-counts")||"{}");
+    return {imageRuns:Math.max(0,Number(value.imageRuns)||0),textRuns:Math.max(0,Number(value.textRuns)||0)};
+  }catch{return {imageRuns:0,textRuns:0};}
+}
+export function incrementUsage(key:keyof LocalUsage):void{
+  if(typeof window==="undefined")return;
+  try{
+    const counts=getUsage();
+    counts[key]+=1;
+    window.localStorage.setItem("chanseller-operation-counts",JSON.stringify(counts));
+  }catch{/* Browser may block local storage. The photo/copy action should still work. */}
 }

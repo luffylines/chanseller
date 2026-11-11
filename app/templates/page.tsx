@@ -1,17 +1,25 @@
 import Link from "next/link";
-import { ArrowRight, Check, Layers3, Sparkles } from "lucide-react";
+import { ArrowRight, Layers3, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { scenePaths, type PresetId } from "@/lib/image";
 
-const templates=[
-  {id:"white",title:"Clean Marketplace",category:"Clean studio",info:"Classic crisp background for catalog products.",cls:"white",name:"Best for marketplaces"},
-  {id:"lavender",title:"Soft Lavender",category:"Pastel collection",info:"Gentle lavender setting for lifestyle products.",cls:"lavender",name:"Soft & calming"},
-  {id:"peach",title:"Warm Peach",category:"Warm collection",info:"Warm-toned product look with a friendly feel.",cls:"peach",name:"Warm & friendly"},
-  {id:"mint",title:"Fresh Mint",category:"Minimal colors",info:"Cool mint backdrop with fresh, clean energy.",cls:"mint",name:"Modern & fresh"},
-  {id:"midnight",title:"Midnight Luxe",category:"Moody studio",info:"Deep contrast for accessories and premium pieces.",cls:"midnight",name:"Dark & refined"}
+const templates: {id:PresetId;title:string;category:string;info:string;tag:string}[]=[
+  {id:"white",title:"Clean Marketplace",category:"Everyday essential",info:"A crisp, simple white product backdrop.",tag:"Classic"},
+  {id:"color",title:"Pastel Color",category:"Color collection",info:"Soft blue, lilac and pink for modern brands.",tag:"Trending"},
+  {id:"studio",title:"Warm Studio",category:"Photo studio",info:"Natural warm tones with a tabletop setting.",tag:"Studio"},
+  {id:"lifestyle",title:"Fresh Lifestyle",category:"Lifestyle",info:"A bright interior with subtle styling props.",tag:"Lifestyle"},
+  {id:"minimal",title:"Minimal Display",category:"Minimal collection",info:"A clean architectural display backdrop.",tag:"Minimal"},
+  {id:"lavender",title:"Soft Lavender",category:"Color collection",info:"Gentle lavender tones for delicate products.",tag:"Soft"},
 ];
-export default function TemplatesPage() {
-  return <AppShell title="Product Templates" description="Pick a background mood and customize it with your own product photo." actions={<Link href="/studio" className="ui-btn ui-btn-outline">Open Studio <ArrowRight size={16}/></Link>}>
-    <div className="feature-notice"><Layers3 size={19}/><div><strong>Simple background presets</strong><p>These are gradient studio looks, not AI-generated lifestyle scenes. Upload a product to create your own.</p></div></div>
-    <div className="template-grid">{templates.map(t=><div className="template-card" key={t.id}><div className={`template-preview template-${t.cls}`}><div className="template-image-wrap"><img src="/demo-headphones.svg" alt={`Illustrated headphones on ${t.title} background`}/></div><span className="template-chip">SAMPLE LOOK</span></div><div className="template-body"><small>{t.category}</small><h3>{t.title}</h3><p>{t.info}</p><Link className="template-button" href={`/studio?preset=${t.id}`}>Use this style <ArrowRight size={16}/></Link></div></div>)}</div>
+export default function TemplatesPage(){
+ return <AppShell title="Templates" description="Ready-made layouts for beautiful, consistent product images." actions={<Link href="/studio" className="ui-btn ui-btn-primary"><Sparkles size={16}/> Create New</Link>}>
+    <div className="feature-notice reference-notice"><Layers3 size={20}/><div><strong>Product background presets</strong><p>Select one of the studio looks. The scene images are decorative preset assets; uploading and cutting out your product requires the local AI worker.</p></div></div>
+    <div className="template-grid">{templates.map(t=><article className="template-card" key={t.id}>
+      <div className={`template-preview preset-${t.id}`} style={scenePaths[t.id]?{backgroundImage:`url(${scenePaths[t.id]})`,backgroundSize:"cover",backgroundPosition:"center"}:undefined}>
+        <span className="template-chip">{t.tag}</span>
+        <div className="template-image-wrap"><img src="/demo-headphones.svg" alt={`Illustrative headphones in ${t.title} style`}/></div>
+      </div>
+      <div className="template-body"><small>{t.category}</small><h3>{t.title}</h3><p>{t.info}</p><Link className="template-button" href={`/studio?preset=${t.id}`}>Use Template <ArrowRight size={16}/></Link></div>
+    </article>)}</div>
   </AppShell>;
 }

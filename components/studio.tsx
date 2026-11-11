@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { createStudioExport, downloadBlob, presets, safeFilename, type Adjustments, type PresetId } from "@/lib/image";
-import { generateId, saveProduct } from "@/lib/local-data";
+import { generateId, incrementUsage, saveProduct } from "@/lib/local-data";
 import { ArrowLeftRight, Check, CheckCircle2, ChevronDown, CircleHelp, CloudOff, Copy, Download, Eraser, ImagePlus, Images, Layers3, LoaderCircle, Maximize2, MonitorCheck, Paintbrush, RotateCcw, Save, Scissors, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Upload, UploadCloud, WandSparkles, X } from "lucide-react";
 
 const MAX_BYTES = 8*1024*1024;
@@ -89,7 +89,7 @@ export function StudioApp(){
       }
       const blob=await response.blob();
       if(!blob.type.includes("png"))throw new Error("The image worker did not return a PNG.");
-      setCutout(URL.createObjectURL(blob));
+      setCutout(URL.createObjectURL(blob));incrementUsage("imageRuns");
       setCompare(false);setWorker("online");setSuccess("Background successfully removed. Customize and save your result.");
       setActiveTool("background");
     }catch(e){

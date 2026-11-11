@@ -1,4 +1,4 @@
-export type PresetId="white"|"peach"|"lavender"|"mint"|"midnight";
+export type PresetId="white"|"peach"|"lavender"|"mint"|"midnight"|"color"|"studio"|"lifestyle"|"minimal";
 export type Adjustments={brightness:number;contrast:number;saturation:number};
 export type ExportSize="square"|"portrait"|"story";
 export const presets:{id:PresetId;name:string;colors:[string,string]}[]=[
@@ -6,8 +6,13 @@ export const presets:{id:PresetId;name:string;colors:[string,string]}[]=[
   {id:"peach",name:"Warm peach",colors:["#fff0e6","#ffd1b9"]},
   {id:"lavender",name:"Soft lilac",colors:["#f4edff","#dacafb"]},
   {id:"mint",name:"Fresh mint",colors:["#e9fff8","#c4efdf"]},
-  {id:"midnight",name:"Midnight",colors:["#414d68","#171f34"]}
+  {id:"midnight",name:"Midnight",colors:["#414d68","#171f34"]},
+  {id:"color",name:"Color",colors:["#ccecff","#fdd6ec"]},
+  {id:"studio",name:"Studio",colors:["#f4efe5","#c8ad8e"]},
+  {id:"lifestyle",name:"Lifestyle",colors:["#f1f5ed","#c9b79c"]},
+  {id:"minimal",name:"Minimal",colors:["#f8f9f9","#d9e0e5"]}
 ];
+export const scenePaths:Partial<Record<PresetId,string>>={color:"/scenes/color.svg",studio:"/scenes/studio.svg",lifestyle:"/scenes/lifestyle.svg",minimal:"/scenes/minimal.svg"};
 const dimensions:Record<ExportSize,[number,number]>={square:[1200,1200],portrait:[1080,1350],story:[1080,1920]};
 function loadImage(src:string):Promise<HTMLImageElement>{
   return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error("Image could not be loaded."));im.src=src;});
@@ -22,7 +27,16 @@ export async function createStudioExport(src:string,preset:PresetId,adjust:Adjus
   const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
   const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable.");
   const colors=presets.find(p=>p.id===preset)?.colors||presets[0].colors;
-  const bg=ctx.createLinearGradient(0,0,width,height);bg.addColorStop(0,colors[0]);bg.addColorStop(1,colors[1]);ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+  const scene=scenePaths[preset];
+  if(scene){
+    const sceneImage=await loadImage(scene);
+    // Scale scene backgrounds to fill without stretching the visual props.
+    const ratio=Math.max(width/sceneImage.naturalWidth,height/sceneImage.naturalHeight);
+    const bw=sceneImage.naturalWidth*ratio,bh=sceneImage.naturalHeight*ratio;
+    ctx.drawImage(sceneImage,(width-bw)/2,(height-bh)/2,bw,bh);
+  }else{
+    const bg=ctx.createLinearGradient(0,0,width,height);bg.addColorStop(0,colors[0]);bg.addColorStop(1,colors[1]);ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+  }
   const temp=document.createElement("canvas");temp.width=img.naturalWidth;temp.height=img.naturalHeight;
   const tctx=temp.getContext("2d",{willReadFrequently:true});if(!tctx)throw new Error("Canvas unavailable.");tctx.drawImage(img,0,0);
   const pixels=tctx.getImageData(0,0,temp.width,temp.height).data;
